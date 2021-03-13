@@ -112,4 +112,3 @@ Client End Point Application uses Web Toolkit EnxRtc.js to communicate with Enab
 
 To know more about Client API, go to:
 https://developer.enablex.io/video-api/client-api/
-# Enablex
