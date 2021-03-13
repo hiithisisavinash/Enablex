@@ -7,7 +7,10 @@ let EnxRtc = window.EnxRtc;
 let EnxWb = window.EnxWb;
 
 export default function Room(props) {
-    let player_options = {
+    let canvasStarted = false;
+    let presentationStarted = false;
+    // Player Options
+let player_options = {
     "player": {
         "autoplay": "",     // Enum: autoplay (default)
         "name": "",         // Use stream.attributes.name preferably
@@ -20,8 +23,6 @@ export default function Room(props) {
         'displayMode': false,
     }
 };
-    let canvasStarted = false;
-    let presentationStarted = false;
     let { token } = useParams();
     let ATList = [];
     let audio_muted = false;
@@ -106,12 +107,16 @@ export default function Room(props) {
 
                 // assigning room object to a variable
                 room = success.room;
+		console.log("roomsetting:",success,success.room);
                 // check if the user joined as moderator or participant
                 isModerator = room.me.role === "moderator" ? true : false;
                 var ownId = success.publishId;
                 for (var i = 0; i < success.streams.length; i++) {
                     room.subscribe(success.streams[i]);
                 }
+		
+
+
                 // Active talkers handling
                 room.addEventListener("active-talkers-updated", function (event) {
                     console.log("Active Talker List :- " + JSON.stringify(event));
@@ -149,7 +154,10 @@ export default function Room(props) {
                         }
                     }
                 });
-		room.addEventListener("canvas-started",function(data){
+
+		
+                room.addEventListener("canvas-started",function(data){
+			console.log("canvas-started");
                       if(data.message.clientId != room.me.clientId)
                       {
                         canvasStarted = true;
@@ -159,7 +167,8 @@ export default function Room(props) {
                         st.play("canvasStreamPlayer",player_options);
                         document.querySelector("#canvasStreamPlayer").style.border = "1px solid red";
                       }
-                   });
+		});
+                      
 
                 // room recording start  notification
                 room.addEventListener("room-record-on", function () {
@@ -189,39 +198,11 @@ export default function Room(props) {
                 room.addEventListener("room-disconnected", function (streamEvent) {
                     window.location.href = "/";
                 });
+
+
+
             }
         });
-	
-	//
-	document.querySelector("#whiteboard_btn").addEventListener('click', function (e) {
-            if (audio_muted) {
-		var wb = new EnxWb({
-                        canvasId: 'wb',
-                        initialWidth: 1000,
-                        initialHeight: 500,
-                        scheme : 'default',
-                    });
-                    wb.create(room);
-		    wb.startStreaming();
-                    wb.startCollaboration();
-                   room.addEventListener("user-connected",function(event){
-                       var clientId = event.clientId;
-                       wb.shareWith(clientId);
-                   })
-                   var i =0;
-                   room.addEventListener("stream-subscribed", function (res) {
-                       console.log("stream_subscribed",i++);
-                       // document.getElementById("notifications").innerHTML = JSON.stringify(res, undefined, 4);
-                   })
-            } 
-        });
-	
-                    
-
-
-
-
-
 
         // self stream audio mute/unmute  function
         document.querySelector("#self_aMute").addEventListener('click', function (e) {
@@ -243,6 +224,42 @@ export default function Room(props) {
                 });
             }
         });
+
+	
+	//Canvas streaming
+        document.querySelector("#whiteboard_btn").addEventListener('click', function (e) {    
+	if(canvasStarted == false){
+		let wb  =  new EnxWb(
+	{	canvasId: 'wb', // id of the canvas 
+		initialWidth: 1000,
+		initialHeight: 1000,
+		scheme : 'custom',
+		custom: {
+			bgColor : 'red',		/* WB Backbround */
+			toolbarBGColor : 'black',	/* Toolbar Background */
+			brushColor:'black',		/* Default Brush Color */
+			icon : {			/* Toolbar Icon definition */
+				size: 'medium', /* Enum: small,large,medium */
+				type: 'rounded-square', /* Enum:  square,rounded-square */
+				BGColor: '#f3f3f3',	/* Tool Background */
+				FGColor: '#000000',	/* Tool Foreground */
+				border: '1px solid grey'/* Tool Border */
+			}
+		}
+	}
+        	);
+                    wb.create(room);
+		   wb.startStreaming();
+                    wb.startCollaboration();
+                   room.addEventListener("user-connected",function(event){
+                       var clientId = event.clientId;
+                       wb.shareWith(clientId);
+                   })
+		}
+        });
+
+
+
 
         document.querySelector("#disconnect_call").addEventListener("click", function () {
             room.disconnect();
@@ -279,11 +296,8 @@ export default function Room(props) {
                 });
             }
         });
+
     }
-
-
-
-
 
     return (
         <div>
@@ -295,18 +309,17 @@ export default function Room(props) {
                 </div>
 
                 <div className="container" >
-			<div className="">
-        <div className="col-md-9">
-            <div id="main-container" className="enx-layout-container">
-                <canvas id="wb"></canvas>
-            </div>
-
-        </div>
-        <div className="col-md-3">
-            <div id="canvasStreamPlayer"></div>
-        </div>
-    </div>
                     <div className="row p-0 m-0" id="call_container_div">
+			<div className="">
+			<div className="col-md-9">
+			    <div id="main-container" className="enx-layout-container">
+				<canvas id="wb"></canvas>
+			    </div>
+			</div>
+			<div className="col-md-3">
+			    <div id="canvasStreamPlayer"></div>
+			</div>
+		    	</div>
 
                         <div className="local_class_peep" id="local_view">
                             <div id="self-view"></div>
@@ -327,8 +340,8 @@ export default function Room(props) {
                                 <div className="video-mute-icon" id="mute_video" title="Mute/Unmute Video">
                                     <i className="fa fa-video" id="self_vMute"></i>
                                 </div>
-                                <div className="video-mute-icon" id="whiteboard_btn" title="Start Share">
-                                    <i className="fa fa-desktop fa-fw SSicon></i>
+                                <div className="video-mute-icon" id="whiteboard_btn" title="Start Whiteboard">
+                                    <i className="fa fa-desktop fa-fw SSicon"></i>
                                 </div>
                                 {/* <div className="video-mute-icon" id="toggle_chat" title="Chat">
                                     <i className="fas fa-comment-dots fa-fw CBicon" ></i>
