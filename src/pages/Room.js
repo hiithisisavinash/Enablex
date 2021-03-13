@@ -258,9 +258,6 @@ let player_options = {
 		}
         });
 
-
-
-
         document.querySelector("#disconnect_call").addEventListener("click", function () {
             room.disconnect();
         });
