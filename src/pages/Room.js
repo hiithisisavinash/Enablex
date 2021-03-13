@@ -149,6 +149,17 @@ export default function Room(props) {
                         }
                     }
                 });
+		room.addEventListener("canvas-started",function(data){
+                      if(data.message.clientId != room.me.clientId)
+                      {
+                        canvasStarted = true;
+                        presentationStarted = true;
+                        var stream_id = data.message.streamId;
+                        var st = room.remoteStreams.get(stream_id);
+                        st.play("canvasStreamPlayer",player_options);
+                        document.querySelector("#canvasStreamPlayer").style.border = "1px solid red";
+                      }
+                   });
 
                 // room recording start  notification
                 room.addEventListener("room-record-on", function () {
@@ -182,7 +193,7 @@ export default function Room(props) {
         });
 	
 	//
-	document.querySelector("#self_aMute").addEventListener('click', function (e) {
+	document.querySelector("#whiteboard_btn").addEventListener('click', function (e) {
             if (audio_muted) {
 		var wb = new EnxWb({
                         canvasId: 'wb',
@@ -191,6 +202,7 @@ export default function Room(props) {
                         scheme : 'default',
                     });
                     wb.create(room);
+		    wb.startStreaming();
                     wb.startCollaboration();
                    room.addEventListener("user-connected",function(event){
                        var clientId = event.clientId;
@@ -201,30 +213,10 @@ export default function Room(props) {
                        console.log("stream_subscribed",i++);
                        // document.getElementById("notifications").innerHTML = JSON.stringify(res, undefined, 4);
                    })
-                   room.addEventListener("canvas-started",function(data){
-                      if(data.message.clientId != room.me.clientId)
-                      {
-                        canvasStarted = true;
-                        presentationStarted = true;
-                        var stream_id = data.message.streamId;
-                        var st = room.remoteStreams.get(stream_id);
-                        st.play("canvasStreamPlayer",player_options);
-                        document.querySelector("#canvasStreamPlayer").style.border = "1px solid red";
-                      }
-                   });
-                
-            } else {
-                
-            }
+            } 
         });
 	
-                    room.addEventListener("canvas-stopped",function(data){
-                        canvasStarted = false;
-                        presentationStarted = false;
-                        document.querySelector("#canvasStreamPlayer").innerHTML = "";
-                        document.querySelector("#canvasStreamPlayer").style.border = "none";
-                    });
-	//
+                    
 
 
 
@@ -335,9 +327,9 @@ export default function Room(props) {
                                 <div className="video-mute-icon" id="mute_video" title="Mute/Unmute Video">
                                     <i className="fa fa-video" id="self_vMute"></i>
                                 </div>
-                                {/* <div className="video-mute-icon" id="share_screen_btn" title="Start Share">
-                                    <i className="fa fa-desktop fa-fw SSicon"></i>
-                                </div> */}
+                                <div className="video-mute-icon" id="whiteboard_btn" title="Start Share">
+                                    <i className="fa fa-desktop fa-fw SSicon></i>
+                                </div>
                                 {/* <div className="video-mute-icon" id="toggle_chat" title="Chat">
                                     <i className="fas fa-comment-dots fa-fw CBicon" ></i>
                                     <span className="tag tag-danger top" id="chat-tag">&nbsp;</span>
